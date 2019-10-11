@@ -1,0 +1,25 @@
+{
+  "name": "voker",
+  "version": "1.0.0",
+  "description": "backend for voker",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blidkid/voker-api.git"
+  },
+  "author": "Aldo Silva",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/blidkid/voker-api/issues"
+  },
+  "homepage": "https://github.com/blidkid/voker-api#readme",
+  "dependencies": {
+    "config": "^3.2.3",
+    "express": "^4.17.1",
+    "mongoose": "^5.7.4",
+    "nodemon": "^1.19.3"
+  }
+}
