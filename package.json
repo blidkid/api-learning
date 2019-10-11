@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/blidkid/voker-api#readme",
   "dependencies": {
+    "@hapi/joi": "^16.1.7",
+    "bcrypt": "^3.0.6",
     "config": "^3.2.3",
     "express": "^4.17.1",
     "mongoose": "^5.7.4",

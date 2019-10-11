@@ -1,0 +1,5 @@
+{
+    "DB_CONNECTION": {
+        "host": "mongodb+srv://Aldo:aldosilva12@cluster0-tmssz.mongodb.net/test?retryWrites=true&w=majority"
+    }
+}
