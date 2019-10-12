@@ -12,10 +12,12 @@ mongoose.connect(dbCon,
 
 //Import Routes
 const authRoute = require('./routes/auth');
+const userProfileRoute = require('./routes/userProfile');
 
 //Middleware
 app.use(express.json());
 app.use('/api/user', authRoute );
+app.use('/api/profile', userProfileRoute);
 
 
 //ROUTES

@@ -1,8 +1,10 @@
 const router = require('express').Router();
 const User = require('../model/User');
 const bcrypt = require('bcrypt');
-const { registerValidation, mobileValidation } = require('../validation');
-
+const jwt = require('jsonwebtoken');
+const config = require('config');
+const secret = config.get('TOKEN_SECRET.token');
+const { registerValidation, mobileValidation, loginValidation } = require('../validation');
 
 
 router.post('/register', async (req, res) => {
@@ -27,15 +29,12 @@ router.post('/register', async (req, res) => {
 
     if (emailExist)
       return res.status(400).send("Email already exits with different account");
-
-    
+  
 
     //Security hash
-
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
   
-    
 
     let user = new User({
         lastName: req.body.lastName,
@@ -47,20 +46,51 @@ router.post('/register', async (req, res) => {
     });
 
     
-
-    
     try {
     let savedUser = await user.save();
-       res.sendStatus(200);
+       res.sendStatus(200).send({ user: user._id });
     } catch (error) {
         res.sendStatus(400).sendStatus(error);
     }
 });
 
-router.post('/login', (req, res) => {
-    res.send('login');
-});
+router.post('/login', async (req, res) => {
+    const { error } = await loginValidation(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
 
+    let emailExist = await User.findOne({ email: req.body.email });
+    let userNameExist = await User.findOne({ userName: req.body.userName });
+    let mobileExist = await User.findOne({ mobile: req.body.mobile });
+
+    let user;
+
+    //Checking in which Id user decided to use.
+    if (!userNameExist) 
+        if (!mobileExist)
+            if (!emailExist)
+                return res.status(400).send("username, mobile, email or password doesn't match");
+            else
+                user = emailExist;
+        else
+            user = mobileExist;
+    else
+        user = userNameExist;
+
+
+    //Password Validation   
+    let validPass = await bcrypt.compare(req.body.password, user.password);
+    
+    if(!validPass)
+        return res.status(400).send("username, mobile, email or password doesn't match");
+
+    //Logged in Create Token
+    const token = jwt.sign({_id: user._id}, secret, { expiresIn: 30 * 60 });
+    res.header('auth-token', token).send(token);
+
+    //Done
+    //res.status(200).send("Logged In");
+  
+});
 
 
 module.exports = router;
