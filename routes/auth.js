@@ -62,8 +62,8 @@ router.post('/login', async (req, res) => {
     console.log(req.body);
 
     let emailExist = await User.findOne({ email: req.body.email });
-    let userNameExist = await User.findOne({ userName: req.body.userName });
-    let mobileExist = await User.findOne({ mobile: req.body.mobile });
+    let userNameExist = await User.findOne({ userName: req.body.email });
+    let mobileExist = await User.findOne({ mobile: req.body.email });
 
     let user;
 
@@ -71,7 +71,7 @@ router.post('/login', async (req, res) => {
     if (!userNameExist) 
         if (!mobileExist)
             if (!emailExist)
-                return res.status(400).send("username, mobile, email or password doesn't match");
+                return res.status(401).send({error:"Incorrect email or password. Please try again"});
             else
                 user = emailExist;
         else
@@ -84,11 +84,19 @@ router.post('/login', async (req, res) => {
     let validPass = await bcrypt.compare(req.body.password, user.password);
     
     if(!validPass)
-        return res.status(400).send("username, mobile, email or password doesn't match");
+        return res.status(401).send({error:"Incorrect email or password. Please try again"});
 
     //Logged in Create Token
     const token = jwt.sign({_id: user._id}, secret, { expiresIn: 30 * 60 });
-    res.header('auth-token', token).send({id: user._id, firstName: user.firstName, authtoken: token });
+    res.header('auth-token', token).send(
+        {
+            isSucess: true,
+            user:{
+                id: user._id, 
+                firstName: user.firstName, 
+                authtoken: token 
+            }
+        });
 
     //Done
     //res.status(200).send("Logged In");
