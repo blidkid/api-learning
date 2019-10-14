@@ -55,8 +55,11 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
+    console.log(req.body);
     const { error } = await loginValidation(req.body);
     if (error) return res.status(400).send(error.details[0].message);
+
+    console.log(req.body);
 
     let emailExist = await User.findOne({ email: req.body.email });
     let userNameExist = await User.findOne({ userName: req.body.userName });

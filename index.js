@@ -16,6 +16,7 @@ const userProfileRoute = require('./routes/userProfile');
 
 //Middleware
 app.use(express.json());
+app.use(express.urlencoded({extended: true})),
 app.use('/api/user', authRoute );
 app.use('/api/profile', userProfileRoute);
 
