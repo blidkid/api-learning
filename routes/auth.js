@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const secret = config.get('TOKEN_SECRET.token');
-const { registerValidation, mobileValidation, loginValidation } = require('../validation');
+const { registerValidation, mobileValidation, loginValidation, emailValidation, passwordValidation } = require('../validation');
 
 
 router.post('/register', async (req, res) => {
@@ -13,11 +13,21 @@ router.post('/register', async (req, res) => {
     const { error } = await registerValidation(req.body);
     if (error) return res.status(400).send({error:error.details[0].message});
 
+    let emailValid = await emailValidation(req.body.email );
+
+    if( !emailValid)
+        return res.status(400).send({error:"You must enter a valid email address"});
+
     let mobileValid = await mobileValidation(req.body.mobile );
 
     if( !mobileValid )
-    return res.status(400).send("Not a valid UK number");
+        return res.status(400).send({error:"You must enter a valid UK number"});
 
+    let passwordValid = await passwordValidation(req.body.password );
+
+    if( !passwordValid )
+        return res.status(400).send({error:"You password must contain 8 letters with at least one number"});
+    
     let emailExist = await User.findOne({ email: req.body.email });
     let userNameExist = await User.findOne({ userName: req.body.userName });
     let mobileExist = await User.findOne({ mobile: req.body.mobile });

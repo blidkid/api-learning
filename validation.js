@@ -21,6 +21,20 @@ const mobileValidation = async number => {
     return result;
 };
 
+const emailValidation = async email => {
+    var regex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    result =  regex.test(email);
+
+    return result;
+  }
+
+const passwordValidation = async password => {
+    var regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/;
+    result =  regex.test(password);
+
+    return result;
+}
+
 const loginValidation = async data => {
 
     let schema = Joi.object({
@@ -36,3 +50,5 @@ const loginValidation = async data => {
 module.exports.registerValidation = registerValidation;
 module.exports.loginValidation = loginValidation;
 module.exports.mobileValidation = mobileValidation;
+module.exports.emailValidation = emailValidation;
+module.exports.passwordValidation = passwordValidation;
