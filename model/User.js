@@ -42,6 +42,11 @@ const userSchema = new mongoose.Schema({
         max:12,
     },
 
+    isMobileAuthenticated: {
+        type: Boolean,
+        required: true,
+    },
+
     date: {
         type: Date,
         default: Date.now,

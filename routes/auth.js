@@ -6,6 +6,10 @@ const config = require('config');
 const secret = config.get('TOKEN_SECRET.token');
 const { registerValidation, mobileValidation, loginValidation, emailValidation, passwordValidation } = require('../validation');
 
+const accountSid = config.get('TWILIO.accountSid');
+const authToken = config.get('TWILIO.authToken');
+const twilio = require('twilio')(accountSid, authToken);
+
 
 router.post('/register', async (req, res) => {
     console.log(req.body);
@@ -51,6 +55,7 @@ router.post('/register', async (req, res) => {
         userName: req.body.userName,
         password: hashedPassword,
         mobile: req.body.mobile,
+        isMobileAuthenticated: false,
     });
 
     try {
@@ -65,6 +70,12 @@ router.post('/register', async (req, res) => {
                 authtoken: token 
             }
         });
+
+    await twilio.verify.services('VokerCode')
+             .verifications
+             .create({to: '+447759737228', channel: 'sms'})
+             .then(verification => console.log(verification.status));
+
     } catch (error) {
         res.status(400).send({error:error});
     }

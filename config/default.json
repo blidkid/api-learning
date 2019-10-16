@@ -5,6 +5,10 @@
 
     "TOKEN_SECRET": {
         "token": "2dead8b1-6f41-4b1a-acfe-1291f2ae665e"
+    },
 
+    "TWILIO": {
+        "accountSid": "AC8fadf452625f39f812f9052d2d544162",
+        "authToken": "6b753bde145163f66732968fe9ed7069"
     }
 }
