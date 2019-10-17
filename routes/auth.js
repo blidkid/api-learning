@@ -8,6 +8,7 @@ const { registerValidation, mobileValidation, loginValidation, emailValidation, 
 
 const accountSid = config.get('TWILIO.accountSid');
 const authToken = config.get('TWILIO.authToken');
+const serviceSid = config.get('TWILIO.serviceSid');
 const twilio = require('twilio')(accountSid, authToken);
 
 
@@ -58,6 +59,7 @@ router.post('/register', async (req, res) => {
         isMobileAuthenticated: false,
     });
 
+    
     try {
     let savedUser = await user.save();
        //Logged in Create Token
@@ -70,14 +72,17 @@ router.post('/register', async (req, res) => {
                 authtoken: token 
             }
         });
-
-    await twilio.verify.services('VokerCode')
-             .verifications
-             .create({to: '+447759737228', channel: 'sms'})
-             .then(verification => console.log(verification.status));
-
     } catch (error) {
         res.status(400).send({error:error});
+    }
+
+    try {
+        await twilio.verify.services(serviceSid)
+        .verifications
+        .create({to: '+447759737228', channel: 'sms'})
+        .then(verification => console.log(verification.status));
+    } catch (error) {
+        res.status(400).send({error:"Verification system is unavailable"});
     }
 });
 
@@ -128,6 +133,36 @@ router.post('/login', async (req, res) => {
     //Done
     //res.status(200).send("Logged In");
   
+});
+
+router.post('/verify', async (req, res) => {
+    console.log(req.body);
+
+    let mobileExist = await User.findOne({ mobile: req.body.mobile });
+
+    //if (!mobileExist)
+    //    return res.status(400).send({error:"The phonr number you are using does not exist"});
+
+    let verificationStatus;
+
+    try {
+        await twilio.verify.services("VA0840d6319eca9bd90af6120f8b4849a9")
+        .verificationChecks
+        .create({to: req.body.mobile, code: req.body.code})
+        .then(verification_check => console.log(verification_check.status));
+
+        console.log(verificationStatus);
+        if( verificationStatus == 'pending')
+            res.status(401).send({error:"Invalid activation code"});
+        else if(verificationStatus == 'approved' )
+            res.status(200).send({});
+        else
+        res.status(400).send({error:"Verification system is unavailable"});
+
+    } catch (error) {
+        console.log(error)
+        res.status(400).send({error:"Verification system is unavailable"});
+    }
 });
 
 
