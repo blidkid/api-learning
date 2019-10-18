@@ -39,10 +39,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         min: 11,
-        max:12,
     },
 
-    isMobileAuthenticated: {
+    isAuthenticated: {
         type: Boolean,
         required: true,
     },

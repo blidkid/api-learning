@@ -56,7 +56,7 @@ router.post('/register', async (req, res) => {
         userName: req.body.userName,
         password: hashedPassword,
         mobile: req.body.mobile,
-        isMobileAuthenticated: false,
+        isAuthenticated: false,
     });
 
     
@@ -68,8 +68,10 @@ router.post('/register', async (req, res) => {
         {
             isSucess: true,
             user:{
-                id: user._id, 
-                authtoken: token 
+                id: user._id,
+                mobile: user.mobile, 
+                authToken: token,
+                isAuthenticated: user.isAuthenticated
             }
         });
     } catch (error) {
@@ -126,7 +128,9 @@ router.post('/login', async (req, res) => {
             user:{
                 id: user._id, 
                 firstName: user.firstName, 
-                authtoken: token 
+                mobile: user.mobile, 
+                authToken: token,
+                isAuthenticated: user.isAuthenticated 
             }
         });
 
@@ -140,24 +144,44 @@ router.post('/verify', async (req, res) => {
 
     let mobileExist = await User.findOne({ mobile: req.body.mobile });
 
-    //if (!mobileExist)
-    //    return res.status(400).send({error:"The phonr number you are using does not exist"});
+    if (!mobileExist)
+      return res.status(400).send({error:"The phone number you are using does not exist"});
+
+    user = mobileExist;
 
     let verificationStatus;
 
     try {
-        await twilio.verify.services("VA0840d6319eca9bd90af6120f8b4849a9")
+        await twilio.verify.services(serviceSid)
         .verificationChecks
         .create({to: req.body.mobile, code: req.body.code})
-        .then(verification_check => console.log(verification_check.status));
+        .then(verification_check => (verificationStatus = verification_check.status));
 
-        console.log(verificationStatus);
-        if( verificationStatus == 'pending')
+         console.log(verificationStatus);
+        if( verificationStatus == 'pending') {
             res.status(401).send({error:"Invalid activation code"});
-        else if(verificationStatus == 'approved' )
-            res.status(200).send({});
-        else
-        res.status(400).send({error:"Verification system is unavailable"});
+        }
+        else if(verificationStatus == 'approved' ){
+            try {
+                await User.updateOne({_id: user._id}, {isAuthenticated: true})
+                user = User.findOne({ mobile: req.body.mobile }); /// FIx this error
+                res.status(200).send(
+                    {
+                        isSucess: true,
+                        user:{
+                            id: user._id, 
+                            firstName: user.firstName, 
+                            mobile: user.mobile, 
+                            isAuthenticated: user.isAuthenticated 
+                        }
+                    });
+            } catch (error) {
+                res.status(400).send({error:"Unable to verify user"});
+            }
+        }
+        else{
+            res.status(400).send({error:"Verification system is unavailable"});
+        }
 
     } catch (error) {
         console.log(error)

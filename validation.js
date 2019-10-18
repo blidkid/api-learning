@@ -7,7 +7,7 @@ const registerValidation = async data => {
         email: Joi.string().min(3).max(255).required(),
         userName: Joi.string().min(4).max(12).required(),
         password: Joi.string().min(6).required(),
-        mobile: Joi.string().min(11).max(11).required()
+        mobile: Joi.string().min(11).required()
     });
 
 
