@@ -5,12 +5,20 @@ const jwt = require('jsonwebtoken');
 const config = require('config');
 const secret = config.get('TOKEN_SECRET.token');
 const { registerValidation, mobileValidation, loginValidation, emailValidation, passwordValidation } = require('../validation');
-
 const accountSid = config.get('TWILIO.accountSid');
 const authToken = config.get('TWILIO.authToken');
 const serviceSid = config.get('TWILIO.serviceSid');
 const twilio = require('twilio')(accountSid, authToken);
 
+function generatePassword() {
+    var length = 8,
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        retVal = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
+}
 
 router.post('/register', async (req, res) => {
     console.log(req.body);
@@ -59,7 +67,6 @@ router.post('/register', async (req, res) => {
         isAuthenticated: false,
     });
 
-    
     try {
     let savedUser = await user.save();
        //Logged in Create Token
@@ -89,7 +96,9 @@ router.post('/register', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
+    
     console.log(req.body);
+
     const { error } = await loginValidation(req.body);
     if (error) return res.status(400).send(error.details[0].message);
 
@@ -123,20 +132,16 @@ router.post('/login', async (req, res) => {
     //Logged in Create Token
     const token = jwt.sign({_id: user._id}, secret, { expiresIn: 30 * 60 });
     res.header('auth-token', token).send(
-        {
-            isSucess: true,
-            user:{
-                id: user._id, 
-                firstName: user.firstName, 
-                mobile: user.mobile, 
-                authToken: token,
-                isAuthenticated: user.isAuthenticated 
-            }
-        });
-
-    //Done
-    //res.status(200).send("Logged In");
-  
+    {
+        isSucess: true,
+        user:{
+            id: user._id, 
+            firstName: user.firstName, 
+            mobile: user.mobile, 
+            authToken: token,
+            isAuthenticated: user.isAuthenticated 
+        }
+    });
 });
 
 router.post('/verify', async (req, res) => {
@@ -164,9 +169,9 @@ router.post('/verify', async (req, res) => {
         else if(verificationStatus == 'approved' ){
             try {
                 await User.updateOne({_id: user._id}, {isAuthenticated: true})
-                user = User.findOne({ mobile: req.body.mobile }); /// FIx this error
-                res.status(200).send(
-                    {
+                user = await User.findOne({ mobile: req.body.mobile }); /// FIx this error
+                console.log(user);
+                res.status(200).send({
                         isSucess: true,
                         user:{
                             id: user._id, 
@@ -186,6 +191,50 @@ router.post('/verify', async (req, res) => {
     } catch (error) {
         console.log(error)
         res.status(400).send({error:"Verification system is unavailable"});
+    }
+});
+
+router.post('/reset', async (req, res) => {
+    console.log(req.body);
+
+    let mobileExist = await User.findOne({ mobile: req.body.mobile });
+
+    if (!mobileExist)
+      return res.status(400).send({error:"The phone number you are using does not exist"});
+
+    user = mobileExist;
+
+    let newPassword = generatePassword();
+    console.log(newPassword);
+
+    //Security hash
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    try {
+        await User.updateOne({_id: user._id}, {password: hashedPassword})
+        user = await User.findOne({ mobile: req.body.mobile });
+        console.log(user);
+        res.status(200).send({
+                isSucess: true,
+                user:{
+                    id: user._id, 
+                    firstName: user.firstName, 
+                    mobile: user.mobile, 
+                    isAuthenticated: user.isAuthenticated 
+                }
+            });
+    } catch (error) {
+        res.status(400).send({error:"Unable to generate new password"});
+    }
+
+    try {
+        await twilio.messages
+      .create({body: newPassword, from: '+441618502059', to: user.mobile})
+      .then(message => console.log(message.sid));
+    } catch (error) {
+        console.log(error)
+        res.status(400).send({error:"Password generated but messaging service is down"});
     }
 });
 
