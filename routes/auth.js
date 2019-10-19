@@ -88,7 +88,7 @@ router.post('/register', async (req, res) => {
     try {
         await twilio.verify.services(serviceSid)
         .verifications
-        .create({to: '+447759737228', channel: 'sms'})
+        .create({to: user.mobile, channel: 'sms'})
         .then(verification => console.log(verification.status));
     } catch (error) {
         res.status(400).send({error:"Verification system is unavailable"});
@@ -129,6 +129,18 @@ router.post('/login', async (req, res) => {
     if(!validPass)
         return res.status(401).send({error:"Incorrect email or password. Please try again"});
 
+    if( !user.isAuthenticated )
+    {
+        try {
+            await twilio.verify.services(serviceSid)
+            .verifications
+            .create({to: user.mobile, channel: 'sms'})
+            .then(verification => console.log(verification.status));
+        } catch (error) {
+            res.status(400).send({error:"Verification system is unavailable"});
+        }
+    }
+
     //Logged in Create Token
     const token = jwt.sign({_id: user._id}, secret, { expiresIn: 30 * 60 });
     res.header('auth-token', token).send(
@@ -142,6 +154,7 @@ router.post('/login', async (req, res) => {
             isAuthenticated: user.isAuthenticated 
         }
     });
+
 });
 
 router.post('/verify', async (req, res) => {
@@ -194,7 +207,7 @@ router.post('/verify', async (req, res) => {
     }
 });
 
-router.post('/reset', async (req, res) => {
+router.post('/resetPassword', async (req, res) => {
     console.log(req.body);
 
     let mobileExist = await User.findOne({ mobile: req.body.mobile });

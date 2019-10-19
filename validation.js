@@ -38,10 +38,10 @@ const passwordValidation = async password => {
 const loginValidation = async data => {
 
     let schema = Joi.object({
-        userName: Joi.string().min(4).max(12),
-        email: Joi.string().min(3).max(255),
-        mobile: Joi.string().min(3).max(255),
-        password: Joi.string().min(5).required(),
+        userName: Joi.string(),
+        email: Joi.string().max(255),
+        mobile: Joi.string().max(255),
+        password: Joi.string().required(),
     });
 
     return await schema.validate(data);
