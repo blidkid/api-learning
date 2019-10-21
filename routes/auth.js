@@ -48,8 +48,8 @@ router.post('/register', async (req, res) => {
     if (userNameExist) 
       return res.status(400).send({error:"Username already in use"});
 
-    if (mobileExist) 
-      return res.status(400).send({error:"Mobile number already in use"});
+    //if (mobileExist) 
+      //return res.status(400).send({error:"Mobile number already in use"});
 
     if (emailExist)
       return res.status(400).send({error:"Email already exits with different account"});
@@ -250,6 +250,29 @@ router.post('/resetPassword', async (req, res) => {
         res.status(400).send({error:"Password generated but messaging service is down"});
     }
 });
+
+router.post('/resetVerification', async (req, res) => {
+    console.log(req.body);
+
+    let mobileExist = await User.findOne({ mobile: req.body.mobile });
+
+    if (!mobileExist)
+      return res.status(400).send({error:"The phone number you are using does not exist"});
+
+    user = mobileExist;
+
+    try {
+        await twilio.verify.services(serviceSid)
+        .verifications
+        .create({to: user.mobile, channel: 'sms'})
+        .then(verification => console.log(verification.status));
+
+        res.status(200)
+    } catch (error) {
+        res.status(400).send({error:"Verification system is unavailable"});
+    }
+});
+
 
 
 module.exports = router;
